@@ -3,16 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <time.h>
 
-int gtemp,prevGtemp;
-int total_message;
-long ellapsedSecond = 10;
+int gtemp;
 void on_connect(struct mosquitto *mosq, void *obj, int reason_code)
 {
-	/* equivalent for MQTT v5.0
-	 * clients is mosquitto_reason_string().
-	 */
 	printf("on_connect: %s\n", mosquitto_connack_string(reason_code));
 	if(reason_code != 0){
 		printf("cound not connect to the broker\n");
@@ -21,18 +15,16 @@ void on_connect(struct mosquitto *mosq, void *obj, int reason_code)
 }
 
 
-
 void on_publish(struct mosquitto *mosq, void *obj, int mid)
 {
-	if (gtemp != prevGtemp) total_message++;
-	prevGtemp = gtemp;
-	//printf("Message with temperature %d and mid %d has been published.\n", gtemp, mid);
+    //Do Nothing
+	printf("Message with temperature %d and mid %d has been published.\n", gtemp, mid);
 }
 
 int get_temperature(void)
 {
-	sleep(1);
-	gtemp = random()%100; 
+	sleep(0.001);
+	gtemp = (random()%100)+1000; 
 	return gtemp;
 }
 
@@ -51,7 +43,6 @@ void publish_sensor_data(struct mosquitto *mosq)
 	if(rc != MOSQ_ERR_SUCCESS){
 		fprintf(stderr, "Error publishing: %s\n", mosquitto_strerror(rc));
 	}
-
 }
 
 
@@ -59,14 +50,7 @@ int main(int argc, char *argv[])
 {
 	struct mosquitto *mosq;
 	int rc;
-	total_message = 0;
-	prevGtemp = 0;
-	time_t start, stop;
-	if(argc>1){
 
-		ellapsedSecond = (long)atoi(argv[1]);
-	}
-	printf("Time to ellapse: %lld\n",ellapsedSecond);
 	mosquitto_lib_init();
 
 	mosq = mosquitto_new(NULL, true, NULL);
@@ -78,7 +62,7 @@ int main(int argc, char *argv[])
 	mosquitto_connect_callback_set(mosq, on_connect);
 	mosquitto_publish_callback_set(mosq, on_publish);
 
-	rc = mosquitto_connect(mosq, "test.mosquitto.org", 1883, 60);
+	rc = mosquitto_connect(mosq, "test.mosquitto.org", 1883, 5);
 	if(rc != MOSQ_ERR_SUCCESS){
 		mosquitto_destroy(mosq);
 		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
@@ -93,14 +77,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	sleep(1);
-	start = time(NULL);
 	while(1){
 		publish_sensor_data(mosq);
-		stop = time(NULL);
-		if(stop-start>(time_t)ellapsedSecond) break;
 	}
-	printf("Total messages passed: %lld\n",total_message);
 
 	mosquitto_lib_cleanup();
 	return 0;

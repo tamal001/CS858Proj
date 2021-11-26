@@ -3,7 +3,7 @@ CFLAGS=-Wall -g -O3 -std=c++17
 ALLOC_DEP=/usr/local/lib/libmosquitto.so.1
 ALLOC_LINK=$(ALLOC_DEP) -lpthread -ldl
 
-PROGRAMS = publish subscribe
+PROGRAMS = publish subscribe malicious
 
 all: $(PROGRAMS)
 #all: publish subscribe
@@ -14,5 +14,7 @@ publish:
 subscribe: 
 	$(CC) $(CFLAGS) subscribe.cpp -o subscribe $(ALLOC_LINK)
 
+malicious:
+	$(CC) $(CFLAGS) malici.cpp -o malici $(ALLOC_LINK)
 clean:
-	rm -f publish subscribe
+	rm -f publish subscribe malici
